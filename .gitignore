@@ -52,3 +52,6 @@ ScaffoldingReadMe.txt
 
 # Node modules (if any)
 node_modules/
+
+# wwwroot lib folder (vendor libraries)
+wwwroot/lib/
