@@ -28,9 +28,12 @@ export function initialize(dotNetReference, timeout) {
     dotNetRef = dotNetReference;
     timeoutMs = timeout;
     
-    // Add event listeners with passive option for better performance
+    // Add event listeners - use passive for scroll-related events only
     events.forEach(event => {
-        document.addEventListener(event, handleUserActivity, { passive: true });
+        const options = (event === 'scroll' || event === 'mousemove') 
+            ? { passive: true } 
+            : false;
+        document.addEventListener(event, handleUserActivity, options);
     });
     
     // Start the timer
