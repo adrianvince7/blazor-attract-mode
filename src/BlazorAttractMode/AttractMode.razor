@@ -1,0 +1,54 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject AttractModeService Service
+@implements IAsyncDisposable
+
+@if (_isActive)
+{
+    <div class="attract-mode-overlay" style="z-index: @Service.Options.ZIndex">
+        <video autoplay 
+               loop="@Service.Options.Loop" 
+               muted="@Service.Options.Muted"
+               class="attract-mode-video">
+            <source src="@Service.Options.VideoSource" type="video/mp4" />
+            Your browser does not support the video tag.
+        </video>
+    </div>
+}
+
+@code {
+    private bool _isActive;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<AttractMode>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorAttractMode/attractMode.js");
+            
+            await _jsModule.InvokeVoidAsync("initialize", _dotNetRef, Service.Options.InactivityTimeoutMs);
+        }
+    }
+
+    [JSInvokable]
+    public void OnAttractModeChanged(bool isActive)
+    {
+        _isActive = isActive;
+        Service.NotifyStateChanged(isActive);
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
+        {
+            await _jsModule.InvokeVoidAsync("dispose");
+            await _jsModule.DisposeAsync();
+        }
+        
+        _dotNetRef?.Dispose();
+    }
+}
